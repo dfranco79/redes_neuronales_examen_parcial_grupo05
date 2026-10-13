@@ -1,0 +1,7 @@
+experimento,auc_macro_oro
+resnet50_focal_suave_ninguno_principal,0.7382694199158535
+resnet50_bce_suave_ninguno_principal,0.7358452155156087
+resnet50_bce_suave_ninguno_alterna,0.7338458729722871
+resnet50_bce_consenso_ninguno_principal,0.7213251229672818
+resnet50_bce_suave_pos_weight_principal,0.7171367375779655
+cero_bce_suave_ninguno_principal,0.6445763293502016

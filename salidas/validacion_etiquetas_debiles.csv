@@ -1,0 +1,14 @@
+etiqueta,positivos_oro,acuerdo,f1,kappa
+ACL,24,0.897,0.889,0.794
+MCL,9,0.845,0.609,0.518
+Medial Meniscus,26,0.879,0.868,0.757
+Lateral Meniscus,23,0.862,0.818,0.707
+Medial OA,15,0.845,0.71,0.604
+Lateral OA,11,0.776,0.519,0.379
+PF OA,21,0.776,0.711,0.529
+Effusion,35,0.707,0.8,0.31
+Synovitis,27,0.672,0.558,0.324
+Baker's,12,0.897,0.786,0.719
+Contusion,19,0.759,0.632,0.452
+Fracture,18,0.793,0.7,0.545
+MACRO,240,0.809,0.717,0.553
