@@ -1,12 +1,19 @@
 """
-Paso 5: análisis para el informe (se corre después de ejecutar_colab.sh).
+Paso 5: análisis de resultados (se corre después de los pasos 03 y 04).
 
-- Intervalos de confianza 95 % del AUC macro por bootstrap (2.000 remuestreos) y
-  diferencia de cada experimento contra el modelo base, sobre los mismos remuestreos.
-- Figuras: curvas de validación, AUC por hallazgo, prevalencia y paneles Grad-CAM.
-- Tabla comparativa del AUC macro de todos los experimentos.
-Salida: salidas/intervalos_confianza.csv, salidas/comparacion_experimentos.csv y salidas/figuras/*.pdf
-Uso:    python 05_analisis_informe.py
+No entrena nada: lee lo que dejaron los pasos 03 y 04 en salidas/ y genera:
+1. salidas/intervalos_confianza.csv
+   AUC macro de cada experimento con IC 95 % bootstrap (2.000 remuestreos, semilla fija) y
+   diferencia contra el modelo base (base menos experimento) con su propio IC 95 %.
+2. salidas/comparacion_experimentos.csv
+   Ranking simple del AUC macro dorado de todos los experimentos.
+3. salidas/figuras/
+   - curvas.pdf            AUC de validación débil por época de cada experimento
+   - auc_etiqueta.pdf      AUC por hallazgo: CNN desde cero vs ResNet-50 base
+   - gradcam_resnet50.pdf  un mapa Grad-CAM por hallazgo del modelo base
+   - gradcam_cero.pdf      un mapa Grad-CAM por hallazgo de la CNN desde cero
+Las tablas también se imprimen en pantalla.
+Uso: python 05_analisis_informe.py
 """
 import glob
 import json

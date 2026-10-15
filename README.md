@@ -166,7 +166,7 @@ salidas/<experimento>/mejor_modelo.pt        pesos del mejor modelo
 salidas/<experimento>/gradcam/*.png          mapas Grad-CAM (solo modelo base y desde cero)
 salidas/comparacion_experimentos.csv         AUC macro de todos los experimentos
 salidas/intervalos_confianza.csv             IC 95 % bootstrap y diferencias contra el modelo base
-salidas/figuras/*.pdf                        figuras del informe
+salidas/figuras/*.pdf                        curvas, AUC por hallazgo y paneles Grad-CAM
 salidas/log_colab.txt                        registro completo de la ejecución
 ```
 
