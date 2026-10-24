@@ -2,22 +2,38 @@
 Constantes del proyecto (Pregunta 1: clasificación multietiqueta de RM de rodilla).
 Cambia aquí rutas e hiperparámetros; el resto del código solo las importa.
 """
+import os
 from pathlib import Path
 
+VERSION = "v4"                                     # versión del pipeline (taxonomía de carpetas por ejecución)
+
 # ---------------------------------------------------------------- rutas
-# Carpeta del proyecto (en Colab: /content/drive/MyDrive/rsna_rodilla)
-RAIZ = Path(__file__).resolve().parent
-DIR_DATOS = RAIZ / "datos"                       # CSV de entrada y selección
-DIR_TENSORES = RAIZ / "tensores"                 # volúmenes preprocesados (.npz)
-DIR_SALIDAS = RAIZ / "salidas"                   # métricas, modelos, Grad-CAM
+# Taxonomía de carpetas (v4):
+#   datos/entrada/     CSV de entrada (no se modifican)
+#   datos/generados/   salidas del paso 01 (selección, validación de etiquetas, prevalencia)
+#   tensores/          volúmenes .npz del paso 02 (se reutilizan entre ejecuciones)
+#   ejecuciones/<ID>/  resultados de una corrida de Colab (pasos 03 a 05), una carpeta por corrida
+RAIZ = Path(__file__).resolve().parent             # carpeta Pregunta01
+DIR_DATOS_ENTRADA = RAIZ / "datos" / "entrada"
+DIR_DATOS_GENERADOS = RAIZ / "datos" / "generados"
+DIR_TENSORES = RAIZ / "tensores"
 
-# DICOM originales (solo los usa 02_preprocesar_dicom.py, en la PC con el disco D:)
-DIR_DICOM = Path(r"D:\kaggle\rsna-knee-abnormality-detection\train_series")
+# Identificador de la corrida. Se toma de la variable de entorno ID_EJECUCION
+# (ejecutar_colab.sh la define); si no existe, se usa este valor por defecto.
+ID_EJECUCION = os.environ.get("ID_EJECUCION", "ejecucion_manual")
+DIR_EJECUCION = RAIZ / "ejecuciones" / ID_EJECUCION
+DIR_EXPERIMENTOS = DIR_EJECUCION / "experimentos"  # un subdirectorio por experimento (03 y 04)
+DIR_ANALISIS = DIR_EJECUCION / "analisis"          # intervalos, comparación y figuras (05)
+DIR_LOGS = DIR_EJECUCION / "logs"                  # registro de la corrida y copia de la configuración
 
-CSV_TRAIN_ORIGINAL = DIR_DATOS / "train.csv"                  # 58 filas con etiqueta dorada
-CSV_SERIES = DIR_DATOS / "train_series.csv"                   # estudio -> series + plano/secuencia
-CSV_ETIQUETAS_LLM = DIR_DATOS / "train_etiquetado_v1.3.csv"   # etiquetas curadas (fuente 2)
-CSV_SELECCION = DIR_DATOS / "seleccion_estudios.csv"          # salida de 01_seleccion_estudios.py
+# DICOM originales (solo los usan los pasos 01 y 02, en la PC con los DICOM)
+# (el orquestador puede cambiarla con --dicom, que la pasa como variable de entorno DIR_DICOM)
+DIR_DICOM = Path(os.environ.get("DIR_DICOM", r"D:\kaggle\rsna-knee-abnormality-detection\train_series"))
+
+CSV_TRAIN_ORIGINAL = DIR_DATOS_ENTRADA / "train.csv"                       # Kaggle: 58 filas con etiqueta dorada
+CSV_SERIES = DIR_DATOS_ENTRADA / "train_series.csv"                        # Kaggle: estudio -> series + plano
+CSV_ETIQUETAS_CURADAS = DIR_DATOS_ENTRADA / "etiquetas_curadas_v1.3.csv"   # grupo: etiquetas curadas (fuente 2)
+CSV_SELECCION = DIR_DATOS_GENERADOS / "seleccion_estudios.csv"            # salida del paso 01
 
 # ---------------------------------------------------------------- etiquetas
 ETIQUETAS = ["ACL", "MCL", "Medial Meniscus", "Lateral Meniscus", "Medial OA", "Lateral OA",

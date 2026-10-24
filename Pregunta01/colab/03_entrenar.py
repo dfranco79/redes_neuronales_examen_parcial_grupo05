@@ -2,7 +2,8 @@
 Paso 3: entrenamiento y evaluación (correr en Colab con GPU).
 
 Entrena con etiquetas débiles, hace early stopping y elige umbrales en la validación débil,
-y evalúa UNA vez sobre las 58 etiquetas doradas (nunca se usan para ajustar nada).
+y evalúa UNA vez sobre los estudios dorados con volumen disponible (nunca se usan para ajustar nada).
+Guarda todo en ejecuciones/<ID_EJECUCION>/experimentos/<experimento>/.
 
 Ejemplos:
   python 03_entrenar.py --arquitectura cero
@@ -21,6 +22,10 @@ import pandas as pd
 import torch
 from sklearn.metrics import f1_score, precision_score, recall_score, roc_auc_score
 from torch.utils.data import DataLoader
+
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))   # para importar configuracion.py (carpeta Pregunta01)
 
 import configuracion as C
 from datos import DatasetRodilla
@@ -80,12 +85,13 @@ def main():
     torch.manual_seed(C.SEMILLA); np.random.seed(C.SEMILLA)
     dispositivo = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     nombre = a.nombre or f"{a.arquitectura}_{a.perdida}_{a.etiquetas}_{a.balanceo}_{a.plano}"
-    salida = C.DIR_SALIDAS / nombre; salida.mkdir(parents=True, exist_ok=True)
+    salida = C.DIR_EXPERIMENTOS / nombre; salida.mkdir(parents=True, exist_ok=True)
 
     seleccion = pd.read_csv(C.CSV_SELECCION)
     dir_tensores = C.DIR_TENSORES / a.plano
     conjuntos = {p: DatasetRodilla(seleccion[seleccion.particion == p], dir_tensores, p == "entrenamiento", a.etiquetas)
                  for p in ["entrenamiento", "validacion_debil", "oro"]}
+    print(f"ejecución: {C.ID_EJECUCION} | experimento: {nombre}")
     print({p: len(d) for p, d in conjuntos.items()}, "| dispositivo:", dispositivo)
     cargar = lambda p, mezclar: DataLoader(conjuntos[p], C.TAMANO_LOTE, shuffle=mezclar, num_workers=C.N_TRABAJADORES,
                                            pin_memory=True, drop_last=mezclar and len(conjuntos[p]) > C.TAMANO_LOTE)

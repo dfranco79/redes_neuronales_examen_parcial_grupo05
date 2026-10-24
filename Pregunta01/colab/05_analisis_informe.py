@@ -1,13 +1,14 @@
 """
 Paso 5: análisis de resultados (se corre después de los pasos 03 y 04).
 
-No entrena nada: lee lo que dejaron los pasos 03 y 04 en salidas/ y genera:
-1. salidas/intervalos_confianza.csv
+No entrena nada: lee lo que dejaron los pasos 03 y 04 en ejecuciones/<ID_EJECUCION>/experimentos/
+y genera en ejecuciones/<ID_EJECUCION>/analisis/:
+1. intervalos_confianza.csv
    AUC macro de cada experimento con IC 95 % bootstrap (2.000 remuestreos, semilla fija) y
    diferencia contra el modelo base (base menos experimento) con su propio IC 95 %.
-2. salidas/comparacion_experimentos.csv
+2. comparacion_experimentos.csv
    Ranking simple del AUC macro dorado de todos los experimentos.
-3. salidas/figuras/
+3. figuras/
    - curvas.pdf            AUC de validación débil por época de cada experimento
    - auc_etiqueta.pdf      AUC por hallazgo: CNN desde cero vs ResNet-50 base
    - gradcam_resnet50.pdf  un mapa Grad-CAM por hallazgo del modelo base
@@ -17,12 +18,17 @@ Uso: python 05_analisis_informe.py
 """
 import glob
 import json
+import os
 
 import cv2
 import matplotlib
 import numpy as np
 import pandas as pd
 from sklearn.metrics import roc_auc_score
+
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))   # para importar configuracion.py (carpeta Pregunta01)
 
 import configuracion as C
 
@@ -35,7 +41,7 @@ EXPERIMENTO_CERO = "cero_bce_suave_ninguno_principal"
 COLORES = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100"]
 NOMBRES = ["LCA", "LCM", "Menisco medial", "Menisco lateral", "OA medial", "OA lateral", "OA patelofemoral",
            "Derrame", "Sinovitis", "Quiste de Baker", "Contusión", "Fractura"]
-DIR_FIG = C.DIR_SALIDAS / "figuras"
+DIR_FIG = C.DIR_ANALISIS / "figuras"
 
 
 def auc_macro(y, p):
@@ -44,8 +50,8 @@ def auc_macro(y, p):
 
 def intervalos_confianza():
     oro = pd.read_csv(C.CSV_TRAIN_ORIGINAL).set_index("StudyInstanceUID")
-    experimentos = sorted(p.split("/")[-2] for p in glob.glob(str(C.DIR_SALIDAS / "*/predicciones_oro.csv")))
-    pred = {e: pd.read_csv(C.DIR_SALIDAS / e / "predicciones_oro.csv").set_index("StudyInstanceUID") for e in experimentos}
+    experimentos = sorted(p.parent.name for p in C.DIR_EXPERIMENTOS.glob("*/predicciones_oro.csv"))
+    pred = {e: pd.read_csv(C.DIR_EXPERIMENTOS / e / "predicciones_oro.csv").set_index("StudyInstanceUID") for e in experimentos}
     ids = pred[EXPERIMENTO_BASE].index
     y = oro.loc[ids, C.ETIQUETAS].astype(int).values
     rng = np.random.default_rng(C.SEMILLA)
@@ -59,16 +65,16 @@ def intervalos_confianza():
                       "ic95_inf": np.percentile(boot[e], 2.5), "ic95_sup": np.percentile(boot[e], 97.5),
                       "dif_base_menos_exp": np.mean(d), "dif_ic95_inf": np.percentile(d, 2.5), "dif_ic95_sup": np.percentile(d, 97.5)})
     tabla = pd.DataFrame(filas).round(4)
-    tabla.to_csv(C.DIR_SALIDAS / "intervalos_confianza.csv", index=False)
+    tabla.to_csv(C.DIR_ANALISIS / "intervalos_confianza.csv", index=False)
     print(tabla.to_string(index=False))
 
 
 def tabla_comparativa():
     """AUC macro dorado de cada experimento que tenga resumen.json (se rehace en cada ejecución)."""
     filas = [{"experimento": p.parent.name, "auc_macro_oro": json.load(open(p))["auc_macro_oro"]}
-             for p in C.DIR_SALIDAS.glob("*/resumen.json")]
+             for p in C.DIR_EXPERIMENTOS.glob("*/resumen.json")]
     tabla = pd.DataFrame(filas).sort_values("auc_macro_oro", ascending=False)
-    tabla.to_csv(C.DIR_SALIDAS / "comparacion_experimentos.csv", index=False)
+    tabla.to_csv(C.DIR_ANALISIS / "comparacion_experimentos.csv", index=False)
     print(tabla.to_string(index=False))
 
 
@@ -78,21 +84,21 @@ def estilo():
 
 
 def historial(e):
-    return pd.DataFrame(json.load(open(C.DIR_SALIDAS / e / "resumen.json"))["historial"])
+    return pd.DataFrame(json.load(open(C.DIR_EXPERIMENTOS / e / "resumen.json"))["historial"])
 
 
 def figuras():
-    estilo(); DIR_FIG.mkdir(exist_ok=True)
+    estilo(); DIR_FIG.mkdir(parents=True, exist_ok=True)
     # curvas de AUC en validación débil
     fig, ax = plt.subplots(figsize=(6.4, 2.8))
-    exps = sorted(p.split("/")[-2] for p in glob.glob(str(C.DIR_SALIDAS / "*/resumen.json")))
+    exps = sorted(p.parent.name for p in C.DIR_EXPERIMENTOS.glob("*/resumen.json"))
     for e, c in zip(exps, COLORES * 2):
         h = historial(e); ax.plot(h.epoca, h.auc_validacion_debil, lw=2, color=c, label=e.replace("_principal", ""))
     ax.set_xlabel("Época"); ax.set_ylabel("AUC macro (validación débil)"); ax.legend(frameon=False, fontsize=6.5)
     fig.tight_layout(); fig.savefig(DIR_FIG / "curvas.pdf"); plt.close(fig)
     # AUC por hallazgo: desde cero vs base
-    m0 = pd.read_csv(C.DIR_SALIDAS / EXPERIMENTO_CERO / "metricas_oro.csv").set_index("etiqueta")
-    m1 = pd.read_csv(C.DIR_SALIDAS / EXPERIMENTO_BASE / "metricas_oro.csv").set_index("etiqueta")
+    m0 = pd.read_csv(C.DIR_EXPERIMENTOS / EXPERIMENTO_CERO / "metricas_oro.csv").set_index("etiqueta")
+    m1 = pd.read_csv(C.DIR_EXPERIMENTOS / EXPERIMENTO_BASE / "metricas_oro.csv").set_index("etiqueta")
     y = np.arange(C.N_ETIQUETAS); h = 0.38
     fig, ax = plt.subplots(figsize=(6.4, 3.3))
     ax.barh(y - h / 2, m0.loc[C.ETIQUETAS, "auc_roc"], h, color=COLORES[0], label="CNN desde cero")
@@ -102,10 +108,10 @@ def figuras():
     fig.tight_layout(); fig.savefig(DIR_FIG / "auc_etiqueta.pdf"); plt.close(fig)
     # paneles Grad-CAM: primer mapa de cada hallazgo
     for e in [EXPERIMENTO_BASE, EXPERIMENTO_CERO]:
-        rutas = sorted(glob.glob(str(C.DIR_SALIDAS / e / "gradcam" / "*.png")))
+        rutas = sorted(glob.glob(str(C.DIR_EXPERIMENTOS / e / "gradcam" / "*.png")))
         primeros = {}
         for r in rutas:
-            primeros.setdefault(r.split("/")[-1].rsplit("_", 3)[0], r)
+            primeros.setdefault(os.path.basename(r).rsplit("_", 3)[0], r)
         if primeros:
             fig, ax = plt.subplots(1, len(primeros), figsize=(7.2, 1.95))
             for a, (hallazgo, r) in zip(np.atleast_1d(ax), primeros.items()):
@@ -115,6 +121,8 @@ def figuras():
 
 
 if __name__ == "__main__":
+    C.DIR_ANALISIS.mkdir(parents=True, exist_ok=True)
+    print(f"ejecución: {C.ID_EJECUCION}")
     intervalos_confianza()
     tabla_comparativa()
     figuras()

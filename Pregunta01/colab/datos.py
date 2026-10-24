@@ -4,6 +4,10 @@ import pandas as pd
 import torch
 from torch.utils.data import Dataset
 
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))   # para importar configuracion.py (carpeta Pregunta01)
+
 import configuracion as C
 
 MEDIA_IMAGENET = np.array([0.485, 0.456, 0.406], np.float32)[:, None, None]

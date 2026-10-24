@@ -3,16 +3,20 @@ Paso 1: etiquetas débiles + selección estratificada de estudios.
 
 Qué hace:
 1. Extrae etiquetas por REGLAS (extractor_etiquetas.py) de los 4.407 reportes.
-2. Las combina con las etiquetas curadas (CSV v1.3) en una etiqueta "suave":
+2. Las combina con las etiquetas curadas (datos/entrada/etiquetas_curadas_v1.3.csv) en una etiqueta "suave":
    ambas fuentes = 1 -> 1.0 ; ambas = 0 -> 0.0 ; discrepan -> 0.5 (con confianza baja).
 3. Valida el extractor por reglas contra las 58 etiquetas doradas (entregable 1).
 4. Elige la serie a usar por estudio (sagital sensible a líquido con supresión grasa)
    y arma un subconjunto estratificado: N_ENTRENAMIENTO débiles + 58 dorados.
-Salida: datos/seleccion_estudios.csv y salidas/validacion_etiquetas_debiles.csv
+Salida (datos/generados/): seleccion_estudios.csv, validacion_etiquetas_debiles.csv y prevalencia_seleccion.csv
 """
 import numpy as np
 import pandas as pd
 from sklearn.metrics import cohen_kappa_score, f1_score
+
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))   # para importar configuracion.py (carpeta Pregunta01)
 
 import configuracion as C
 from extractor_etiquetas import etiquetar_informe
@@ -20,7 +24,7 @@ from extractor_etiquetas import etiquetar_informe
 
 def cargar_tablas():
     original = pd.read_csv(C.CSV_TRAIN_ORIGINAL)
-    curadas = pd.read_csv(C.CSV_ETIQUETAS_LLM)
+    curadas = pd.read_csv(C.CSV_ETIQUETAS_CURADAS)
     series = pd.read_csv(C.CSV_SERIES)
     assert (original.StudyInstanceUID == curadas.StudyInstanceUID).all()
     return original, curadas, series
@@ -77,12 +81,13 @@ def main():
 
     reglas = etiquetas_por_reglas(original.Report)
     validacion = validar_contra_oro(reglas, original.loc[es_oro, C.ETIQUETAS])
-    C.DIR_SALIDAS.mkdir(exist_ok=True)
-    validacion.to_csv(C.DIR_SALIDAS / "validacion_etiquetas_debiles.csv", index=False)
+    C.DIR_DATOS_GENERADOS.mkdir(parents=True, exist_ok=True)
+    validacion.to_csv(C.DIR_DATOS_GENERADOS / "validacion_etiquetas_debiles.csv", index=False)
     print("Extractor por reglas vs etiqueta dorada:\n", validacion.to_string(index=False))
 
     # etiqueta suave y confianza (solo estudios sin etiqueta dorada)
-    curadas_e = curadas[C.ETIQUETAS].astype(int) if C.FUENTE_ETIQUETAS == "combinada" else reglas
+    # en el CSV curado las 58 filas doradas van vacías: ahí siempre manda la etiqueta dorada de train.csv
+    curadas_e = curadas[C.ETIQUETAS].fillna(0).astype(int) if C.FUENTE_ETIQUETAS == "combinada" else reglas
     suave = (reglas + curadas_e) / 2.0
     confianza = np.where(reglas.values == curadas_e.values, 1.0, 0.5)
     suave[es_oro.values] = original.loc[es_oro, C.ETIQUETAS].astype(float).values   # oro = verdad
@@ -118,7 +123,7 @@ def main():
     # prevalencia (entregable 6)
     prev = seleccion.groupby("particion")[C.ETIQUETAS].apply(lambda d: (d >= 0.5).sum()).T
     prev["%_entrenamiento"] = (100 * prev["entrenamiento"] / (seleccion.particion == "entrenamiento").sum()).round(1)
-    prev.to_csv(C.DIR_SALIDAS / "prevalencia_seleccion.csv")
+    prev.to_csv(C.DIR_DATOS_GENERADOS / "prevalencia_seleccion.csv")
     print("\nEstudios por partición:", seleccion.particion.value_counts().to_dict())
     print("Dorados sin serie sagital FS (usan alternativa):", int((oro.prioridad_principal != 2).sum()))
     print("\nPrevalencia (positivos, etiqueta suave >= 0.5):\n", prev.to_string())

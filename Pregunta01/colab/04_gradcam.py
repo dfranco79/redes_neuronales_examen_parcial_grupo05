@@ -1,17 +1,23 @@
 """
 Paso 4: Grad-CAM (Selvaraju et al. 2017) sobre estudios dorados positivos.
 
-Para cada hallazgo pedido toma los estudios oro positivos con mayor probabilidad, elige el
+Para cada hallazgo pedido toma los estudios dorados positivos con mayor probabilidad, elige el
 corte con más peso de atención y superpone el mapa de activación de la última capa conv.
+Escribe en ejecuciones/<ID_EJECUCION>/experimentos/<experimento>/gradcam/ (borra antes los mapas viejos).
 Uso: python 03_entrenar.py ...  y luego
      python 04_gradcam.py --experimento resnet50_bce_suave_ninguno_principal --arquitectura resnet50
 """
 import argparse
+import shutil
 
 import cv2
 import numpy as np
 import pandas as pd
 import torch
+
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))   # para importar configuracion.py (carpeta Pregunta01)
 
 import configuracion as C
 from datos import DatasetRodilla
@@ -50,7 +56,7 @@ def main():
     p.add_argument("--casos", type=int, default=3)
     a = p.parse_args()
 
-    dir_exp = C.DIR_SALIDAS / a.experimento
+    dir_exp = C.DIR_EXPERIMENTOS / a.experimento
     dispositivo = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     modelo = crear_modelo(a.arquitectura, preentrenado=False)
     modelo.load_state_dict(torch.load(dir_exp / "mejor_modelo.pt", map_location=dispositivo))
@@ -63,7 +69,9 @@ def main():
     faltan = int(predicciones[C.ETIQUETAS[0]].isna().sum())
     if faltan:
         print(f"Aviso: {faltan} estudios oro no tienen predicción en este experimento (se omiten).")
-    salida = dir_exp / "gradcam"; salida.mkdir(exist_ok=True)
+    salida = dir_exp / "gradcam"
+    shutil.rmtree(salida, ignore_errors=True)   # evita mezclar mapas de corridas anteriores
+    salida.mkdir()
 
     for hallazgo in a.hallazgos:
         j = C.ETIQUETAS.index(hallazgo)

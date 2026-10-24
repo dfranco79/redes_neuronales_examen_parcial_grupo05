@@ -1,0 +1,109 @@
+Inicio 2026-10-23 21:31:53 | pasos: 01, 02p, 02a | DICOM: D:\kaggle\rsna-knee-abnormality-detection\train_series
+
+======================================================================
+[01] Selección de estudios y etiquetas débiles
+$ python local/01_seleccion_estudios.py
+======================================================================
+Extractor por reglas vs etiqueta dorada:
+         etiqueta  positivos_oro  acuerdo    f1  kappa
+             ACL             24    0.897 0.889  0.794
+             MCL              9    0.845 0.609  0.518
+ Medial Meniscus             26    0.879 0.868  0.757
+Lateral Meniscus             23    0.862 0.818  0.707
+       Medial OA             15    0.845 0.710  0.604
+      Lateral OA             11    0.776 0.519  0.379
+           PF OA             21    0.776 0.711  0.529
+        Effusion             35    0.707 0.800  0.310
+       Synovitis             27    0.672 0.558  0.324
+         Baker's             12    0.897 0.786  0.719
+       Contusion             19    0.759 0.632  0.452
+        Fracture             18    0.793 0.700  0.545
+           MACRO            240    0.809 0.717  0.553
+Estudios en disco: 3904 | candidatos de entrenamiento: 3633 | dorados sin carpeta en disco: 5
+
+Estudios por partición: {'entrenamiento': 425, 'validacion_debil': 75, 'oro': 58}
+Dorados sin serie sagital FS (usan alternativa): 2
+
+Prevalencia (positivos, etiqueta suave >= 0.5):
+ particion         entrenamiento  oro  validacion_debil  %_entrenamiento
+ACL                         108   24                20             25.4
+MCL                          83    9                16             19.5
+Medial Meniscus             178   26                29             41.9
+Lateral Meniscus            100   23                15             23.5
+Medial OA                   144   15                31             33.9
+Lateral OA                  118   11                26             27.8
+PF OA                       188   21                34             44.2
+Effusion                    270   35                50             63.5
+Synovitis                    76   27                13             17.9
+Baker's                     115   12                23             27.1
+Contusion                    67   19                17             15.8
+Fracture                     52   18                15             12.2
+
+======================================================================
+[02p] Preprocesamiento DICOM, plano principal (sagital)
+$ python local/02_preprocesar_dicom.py --plano principal --dicom D:\kaggle\rsna-knee-abnormality-detection\train_series
+======================================================================
+25/558 estudios
+50/558 estudios
+75/558 estudios
+100/558 estudios
+125/558 estudios
+150/558 estudios
+175/558 estudios
+200/558 estudios
+225/558 estudios
+250/558 estudios
+275/558 estudios
+300/558 estudios
+325/558 estudios
+350/558 estudios
+375/558 estudios
+400/558 estudios
+425/558 estudios
+450/558 estudios
+475/558 estudios
+500/558 estudios
+525/558 estudios
+550/558 estudios
+558/558 estudios
+estado
+ok             553
+sin_carpeta      5
+
+======================================================================
+[02a] Preprocesamiento DICOM, plano alterno (coronal)
+$ python local/02_preprocesar_dicom.py --plano alterna --dicom D:\kaggle\rsna-knee-abnormality-detection\train_series
+======================================================================
+25/558 estudios
+50/558 estudios
+75/558 estudios
+100/558 estudios
+125/558 estudios
+150/558 estudios
+175/558 estudios
+200/558 estudios
+225/558 estudios
+250/558 estudios
+275/558 estudios
+300/558 estudios
+325/558 estudios
+350/558 estudios
+375/558 estudios
+400/558 estudios
+425/558 estudios
+450/558 estudios
+475/558 estudios
+500/558 estudios
+525/558 estudios
+550/558 estudios
+558/558 estudios
+estado
+ok             553
+sin_carpeta      5
+
+======================================================================
+Resumen
+  01   ok                      0.7 min  
+  02p  ok                     16.2 min  ok: 553, sin_carpeta: 5
+  02a  ok                     13.4 min  ok: 553, sin_carpeta: 5
+Registro completo: D:\maestria_ia_uni\Semestre 2\Redes Neuronales y Aprendizaje Profundo\3-EP\Desarrollo\v4\Pregunta01\datos\generados\logs\orquestador_2026-10-23_2131.txt

@@ -1,0 +1,11 @@
+# Datos de la competencia de Kaggle: no se redistribuyen (se descargan de Kaggle)
+datos/entrada/train.csv
+datos/entrada/train_series.csv
+
+# Volúmenes preprocesados y pesos de los modelos: pesados y regenerables
+tensores/
+*.pt
+
+# Python
+__pycache__/
+*.pyc
