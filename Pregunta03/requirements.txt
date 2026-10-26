@@ -1,0 +1,27 @@
+# Pregunta 3 - Monitoreo de fauna con camaras trampa (YOLOv8 sobre CCT-20)
+# Probado con Python 3.13 (Colab: PyTorch 2.11 + CUDA 13.0, Ultralytics 8.4.188)
+#
+# Instalacion completa:   pip install -r requirements.txt
+#
+# Que necesita cada parte (segun los imports de los .py):
+#   - Parte LOCAL (preparar_local.py y paso1..paso4, cct_comun.py): numpy, pandas, pillow, pyyaml
+#       (+ matplotlib, opcional: solo dibuja desbalance.png en el paso 2)
+#   - Parte COLAB (colab_comun, entrenar, evaluar, robustez, gradcam_cct, monitoreo): todo lo demas.
+#       En Colab ya vienen instalados casi todos; el notebook solo ejecuta "pip install ultralytics".
+#   - "google.colab" (montar Drive) solo existe dentro de Colab; no se instala con pip.
+
+# --- Comunes a las dos partes ---
+numpy
+pandas
+pillow             # import PIL   (paso1, paso3)
+pyyaml             # import yaml  (cct_comun, colab_comun)
+
+# --- Parte Colab ---
+ultralytics==8.4.188   # entrenar.py, evaluar.py, gradcam_cct.py, monitoreo.py, robustez.py (instala torch y torchvision)
+opencv-python          # import cv2   (robustez.py, gradcam_cct.py)
+matplotlib             # curvas, galeria de Grad-CAM y grafico de monitoreo
+scipy                  # lo usa pandas en Series.corr(method="spearman") de evaluar.py
+
+# --- PyTorch ---
+# Lo importan colab_comun.py y gradcam_cct.py y lo instala ultralytics. En Colab ya viene (2.11.0+cu130).
+# En local con GPU NVIDIA, instala antes la build con CUDA desde https://pytorch.org/get-started/locally/
