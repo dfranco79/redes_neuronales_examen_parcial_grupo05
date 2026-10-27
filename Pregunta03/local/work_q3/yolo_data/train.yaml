@@ -1,0 +1,19 @@
+names:
+  0: badger
+  1: bird
+  2: bobcat
+  3: car
+  4: cat
+  5: coyote
+  6: deer
+  7: dog
+  8: fox
+  9: opossum
+  10: rabbit
+  11: raccoon
+  12: rodent
+  13: skunk
+  14: squirrel
+path: F:\MAESTRIA EN IA\EXAMEN PARCIAL\P03\V3\local\work_q3\yolo_data
+train: images/train
+val: images/train
