@@ -138,11 +138,58 @@ Notas:
 
 ## 4. Parte B: ejecución en Google Colab
 
-1. Subir a Google Drive la carpeta `Pregunta01` completa, **incluyendo** `datos/` y `tensores/`
-   (con `principal` y `alterna`). Los DICOM no se suben.
+### 4.1 Qué llevar de la PC a Google Drive
+
+Colab no ve el disco de tu PC: todo lo que necesita tiene que estar en Drive, dentro de una carpeta `Pregunta01`.
+Lleva exactamente esto:
+
+| Qué llevar | Dónde está en la PC | Para qué lo usa Colab |
+|---|---|---|
+| `configuracion.py` | `Pregunta01/` | Rutas e hiperparámetros |
+| Carpeta `colab/` completa | `Pregunta01/colab/` | El notebook y los pasos 03, 04 y 05 |
+| Carpeta `datos/entrada/` | `Pregunta01/datos/entrada/` | `train.csv` (etiquetas doradas para la evaluación final), `train_series.csv` y el CSV curado |
+| Carpeta `datos/generados/` | `Pregunta01/datos/generados/` | `seleccion_estudios.csv`: qué estudios usar y sus etiquetas (sale del paso 01) |
+| `tensores.zip` | Se crea en la PC (ver abajo) | Los volúmenes `.npz` de los dos planos (salen del paso 02) |
+
+No hace falta llevar la carpeta `local/` ni los DICOM.
+
+**Los tensores se suben comprimidos.** Son más de mil archivos, y subirlos sueltos por la web de Drive suele cortarse
+a medias sin avisar: los experimentos terminan entrenando con menos estudios.
+
+1. En la PC, clic derecho sobre la carpeta `tensores` > **Enviar a > Carpeta comprimida (zip)**. El zip debe
+   contener la carpeta `tensores/` con `principal/` y `alterna/` adentro.
+2. Sube `tensores.zip` a la carpeta `Pregunta01` de Drive (al lado de `configuracion.py`) y espera a que termine.
+3. No hay que descomprimirlo: el notebook lo hace solo en la sección 2 cuando faltan volúmenes, y muestra cuántos
+   quedaron en cada plano.
+
+La estructura en Drive debe quedar así:
+
+```
+MyDrive/.../Pregunta01/
+├── configuracion.py
+├── tensores.zip
+├── colab/
+│   ├── 00_orquestador_colab.ipynb
+│   └── 03_entrenar.py, 04_gradcam.py, 05_analisis_informe.py, datos.py, modelos.py
+└── datos/
+    ├── entrada/      train.csv, train_series.csv, etiquetas_curadas_v1.3.csv
+    └── generados/    seleccion_estudios.csv, validacion_etiquetas_debiles.csv, prevalencia_seleccion.csv
+```
+
+**Si ya tienes una versión anterior en Drive** (por ejemplo, después de volver a ejecutar la parte local):
+reemplaza `datos/generados/` y `tensores.zip` por los nuevos. Lo demás no cambia.
+
+**Cómo verificar que todo llegó.** Al ejecutar la sección 2 del notebook debe aparecer el mismo número de volúmenes
+que en la PC (un `.npz` por estudio con imágenes). En el primer experimento, la línea
+`{'entrenamiento': 425, 'validacion_debil': 75, 'oro': ...}` debe mostrar 425 y 75, y en `oro` la cantidad de
+dorados que tienes en disco (58 si la descarga está completa). Si salen números menores, la subida quedó incompleta.
+
+### 4.2 Ejecutar el notebook
+
+1. Haber llevado a Drive lo indicado en el punto 4.1.
 2. En Drive, abrir `Pregunta01/colab/00_orquestador_colab.ipynb` con
    **clic derecho > Abrir con > Google Colaboratory**.
-3. Activar la GPU: **Entorno de ejecución > Cambiar tipo de entorno de ejecución > GPU (T4) > Guardar**.
+3. Activar la GPU: **Entorno de ejecución > Cambiar tipo de entorno de ejecución > GPU (T4 o L4) > Guardar**.
 4. En la celda **1. Parámetros**, ajustar la ruta y el nombre de la corrida:
 
 ```python
@@ -185,7 +232,7 @@ los pasos anteriores no se repiten.
 Tiempo aproximado en una GPU T4: entre 19 y 29 segundos por época, unos 6 minutos por experimento.
 Mantener la pestaña de Colab activa durante la corrida para que no se desconecte Drive.
 
-### Correr un solo experimento
+### 4.3 Correr un solo experimento
 
 Para agregar o repetir un experimento dentro de una corrida existente, en una celda nueva del notebook
 (después de ejecutar la sección 2, que deja la carpeta `Pregunta01` como carpeta de trabajo), se fija el identificador con `%env`
@@ -211,7 +258,7 @@ Opciones de `03_entrenar.py`:
 
 El nombre del experimento se arma solo: `<arquitectura>_<perdida>_<etiquetas>_<balanceo>_<plano>`.
 
-### Verificación y descarga de resultados
+### 4.4 Verificación y descarga de resultados
 
 Comprobar que todos los experimentos se evaluaron con el mismo número de estudios dorados:
 
